@@ -91,6 +91,9 @@ module alu #(
             SLTIU: begin //set (if) less than immediate unsigned 
                 result_next = (unsigned'(data_i.rs1_val) < unsigned'(data_i.imm_val)) ? 32'd1 : 32'd0; 
             end
+            LUI: begin //lui
+                result_next = data_i.imm_val;
+            end
             default: begin //NA
                 result_next = 32'hffff_ffff;
             end

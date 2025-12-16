@@ -90,7 +90,7 @@ module rename_module #(
     );
 
     // ROB tag counter (local tag assignment)
-    logic [ROB_W-1:0] rob_tag_q, rob_tag_d;
+//    logic [ROB_W-1:0] rob_tag_q, rob_tag_d;
 
     // Control
     logic instr_fire;
@@ -117,20 +117,20 @@ module rename_module #(
     end
 
     // ROB tag update
-    always_comb begin
-        rob_tag_d = rob_tag_q;
-        if (instr_fire) rob_tag_d = rob_tag_q + ROB_W'(1);
-    end
+//    always_comb begin
+//        rob_tag_d = rob_tag_q;
+//        if (instr_fire) rob_tag_d = rob_tag_q + ROB_W'(1);
+//    end
 
-    always_ff @(posedge clk_i or posedge rst_i) begin
-        if (rst_i) begin
-            rob_tag_q <= '0;
-        end else if (rat_recover_i) begin
-            rob_tag_q <= rob_tag_q;
-        end else begin
-            rob_tag_q <= rob_tag_d;
-        end
-    end
+//    always_ff @(posedge clk_i or posedge rst_i) begin
+//        if (rst_i) begin
+//            rob_tag_q <= '0;
+//        end else if (rat_recover_i) begin
+//            rob_tag_q <= rob_tag_q;
+//        end else begin
+//            rob_tag_q <= rob_tag_d;
+//        end
+//    end
 
     // RAT update / restore
     always_ff @(posedge clk_i or posedge rst_i) begin
@@ -164,8 +164,9 @@ module rename_module #(
             // ---------------------------------------------------------
             data_o.arch_rd = needs_dest ? data_i.rd : 5'd0;   // [FIX]
 
-            data_o.ROB_tag       = rob_tag_q;
-            data_o.ROB_tag_clone = '0;
+//            data_o.ROB_tag       = rob_tag_q;
+//            data_o.ROB_tag = '0;
+//            data_o.ROB_tag_clone = '0;
 
             data_o.pc       = data_i.pc;
             data_o.imm      = data_i.imm;
@@ -195,7 +196,7 @@ module rename_module #(
 
         if (instr_fire && data_i.branch) begin
             ratfl_chkpt_we_o  = 1'b1;
-            ratfl_chkpt_tag_o = rob_tag_q;
+//            ratfl_chkpt_tag_o = rob_tag_q;
 
             for (int k=0; k<AREG; k++) begin
                 ratfl_chkpt_rat_map_o[k*PREG_W +: PREG_W] = rat[k];

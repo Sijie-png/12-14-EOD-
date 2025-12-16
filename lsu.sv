@@ -54,7 +54,8 @@ module lsu #(
     logic        saved_lsType;       // 1 = word (LW/SW), 0 = byte/half (LBU/SH)
     logic [1:0]  saved_byte_off;
     logic [6:0]  saved_rd_addr;      // adjust width if your rd_addr is wider
-    logic [3:0] saved_ROB_tag;
+    logic [ROB_PTR_W-1:0] saved_ROB_tag;
+
 
     // Next-output struct (combinational)
     LO lsu_out_next;
@@ -134,6 +135,9 @@ module lsu #(
             saved_rd_addr       <= data_i.rd_addr;
             saved_ROB_tag <= data_i.ROB_tag;
             saved_addr_word_idx <= addr_word_idx;
+            
+            $display("[%0t] LSU ACCEPT_REQ: loadStore=%0d rd=%0d tag=%0d",
+         $time, data_i.loadStore, data_i.rd_addr, data_i.ROB_tag);
         end
     end
     
@@ -231,10 +235,23 @@ module lsu #(
                 resp_valid_q <= 1'b0;
             end
 
-            // If a new result becomes ready this cycle (STATE_WAIT2)
-            if (result_ready) begin    // NEW
+            // only latch a new result if output is empty OR being consumed this cycle
+            if (result_ready && (!resp_valid_q || resp_ready_i)) begin    // NEW
                 data_q       <= lsu_out_next;
                 resp_valid_q <= 1'b1;
+            end
+            if (result_ready && (!resp_valid_q || resp_ready_i)) begin
+              $display("[%0t] LSU LATCH RESULT: saved_is_store=%0d saved_is_load=%0d saved_rd=%0d tag=%0d",
+                       $time, saved_is_store, saved_is_load, saved_rd_addr, saved_ROB_tag);
+            end
+
+        end
+    end
+    
+    always_ff @(posedge clk_i) begin
+        if (!reset_i && !flush_i) begin
+            if (accept_req && state != STATE_IDLE) begin
+              $fatal(1, "[%0t] LSU BUG: accept_req fired when state=%0d (not IDLE)", $time, state);
             end
         end
     end

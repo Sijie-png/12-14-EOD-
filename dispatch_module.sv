@@ -174,6 +174,8 @@ module dispatch_module #(
     logic                  rob_commit_valid_int;
     rob_entry_t            rob_commit_entry_int;
     logic [ROB_PTR_W-1:0]  rob_commit_index_int;
+    
+    logic [ROB_PTR_W-1:0] rob_alloc_idx;
 
     rob_module #(.DEPTH(ROB_DEPTH), .PREGS(buffer_pkgs::PREGS)) u_rob (  // [CHG]
         .clk_i                (clk_i),
@@ -189,7 +191,7 @@ module dispatch_module #(
         .alloc_old_preg_i     (buffer_o.old_rd),
         .alloc_is_branch_i    (buffer_o.branch || buffer_o.jump),
         .alloc_pc_i           (buffer_o.pc),
-        .alloc_rob_index_o    (),
+        .alloc_rob_index_o    (rob_alloc_idx),
 
         .chkpt_tail_o         (rob_chkpt_tail_int),
         .chkpt_used_count_o   (rob_chkpt_used_int),
@@ -247,7 +249,7 @@ module dispatch_module #(
             disp_entry.rd     = buffer_o.rd;
             disp_entry.old_rd = buffer_o.old_rd;
 
-            disp_entry.ROB_tag = buffer_o.ROB_tag;
+            disp_entry.ROB_tag = dispatch_fire ? rob_alloc_idx : '0;   // instead of buffer_o.ROB_tag
 
             disp_entry.pc   = buffer_o.pc;
             disp_entry.opcode = buffer_o.opcode;
@@ -363,7 +365,7 @@ module dispatch_module #(
     assign dbg_pipe_fire_o  = buffer_valid_o && buffer_ready_i && !recover_i;
 
     // Tag/pc/fu associated with the current pipe head (when valid)
-    assign dbg_tag_o = buffer_o.ROB_tag;
+    assign dbg_tag_o = disp_entry.ROB_tag;
     assign dbg_pc_o  = buffer_o.pc;
     assign dbg_fu_o  = buffer_o.funcU;
 
@@ -410,7 +412,7 @@ module dispatch_module #(
 
         if (dispatch_fire && (buffer_o.branch || buffer_o.jump)) begin
             rob_chkpt_we_o  = 1'b1;
-            rob_chkpt_tag_o = buffer_o.ROB_tag;
+            rob_chkpt_tag_o = rob_alloc_idx; 
 
             rob_chkpt_tail_o = rob_chkpt_tail_int + ROB_PTR_W'(1);
             rob_chkpt_used_o = rob_chkpt_used_int + (ROB_PTR_W+1)'(1);

@@ -82,7 +82,7 @@ module decode_module #(
             end
 
             7'b0110111 : begin // LUI
-                data_o_comb.aluop = LSHIFT;
+                data_o_comb.aluop = LUI;
                 supported_instr   = 1'b1;
             end
 

@@ -8,6 +8,11 @@ package buffer_pkgs;
     // ---------------------------------------
     localparam int PREGS   = 128;
     localparam int PREG_W  = $clog2(PREGS);   // = 7 for 128 regs
+    
+    //ROB size
+    localparam int ROB_DEPTH = 16;
+    localparam int ROB_PTR_W = $clog2(ROB_DEPTH);
+
 
     // ---------------- Enums ----------------
     typedef enum logic [3:0] {
@@ -17,8 +22,8 @@ package buffer_pkgs;
         ANDD,
         ORR,
         RSHIFT,
-        LSHIFT,
-        SLTIU
+        SLTIU,
+        LUI
     } ALUCTRL;
 
     typedef enum logic [3:0] {
@@ -86,9 +91,10 @@ package buffer_pkgs;
         logic [PREG_W-1:0] old_rd;
         logic [4:0] arch_rd;
 
-        // ROB tags
-        logic [3:0]  ROB_tag;
-        logic [3:0]  ROB_tag_clone;
+//        // ROB tags
+//        logic [ROB_PTR_W-1:0] ROB_tag;
+//        logic [ROB_PTR_W-1:0] ROB_tag_clone; // if still needed
+
 
         // Core instruction info
         logic [31:0] pc;
@@ -119,8 +125,9 @@ package buffer_pkgs;
         logic [PREG_W-1:0] old_rd;
 
         // ROB tags
-        logic [3:0]  ROB_tag;
-        logic [3:0]  ROB_tag_clone;
+        logic [ROB_PTR_W-1:0] ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag_clone; // if still needed
+
 
         // Core instruction info
         logic [31:0] pc;
@@ -173,14 +180,14 @@ package buffer_pkgs;
         logic [31:0] imm_val;
         logic imm_used;
         logic [3:0] aluop;
-        logic [3:0]  ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag;
     } alu_entry_t;
     
     typedef struct packed {
         logic [PREG_W-1:0] rd_addr;
         logic [31:0] rd_val;
         logic completed;
-        logic [3:0]  ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag;
     } alu_out_t;
     
     typedef struct packed {
@@ -195,7 +202,7 @@ package buffer_pkgs;
         logic branch;
         logic [31:0] pc;
         logic took_branch;
-        logic [3:0]  ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag;
     } branch_entry_t;
     
     typedef struct packed {
@@ -205,7 +212,7 @@ package buffer_pkgs;
         logic branch_taken; //0 if branch not taken, 1 if jump or branch taken 
         logic completed;
         logic mispredict;
-        logic [3:0]  ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag;
     } branch_out_t;
     
     typedef struct packed {
@@ -219,14 +226,14 @@ package buffer_pkgs;
         logic lsType; //1 = load/store word, 0 = load byte unsigned/store halfword, passthrough
         logic loadStore; //1 = load, 0 = store, passthrough
         logic [31:0] pc;
-        logic [3:0]  ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag;
     } lsu_entry_t;
     
     typedef struct packed {
         logic [PREG_W-1:0] rd_addr; 
         logic [31:0] rd_val;
         logic completed;
-        logic [3:0]  ROB_tag;
+        logic [ROB_PTR_W-1:0] ROB_tag;
     } lsu_out_t;
     
     // ---------------- Unified writeback packet ----------------
@@ -239,7 +246,7 @@ package buffer_pkgs;
         // ROB completion
         logic              completed;   // usually 1 when valid
         logic              mispredict;  // only meaningful for branches
-        logic [3:0]        ROB_tag;     // tag used to mark ROB complete
+        logic [ROB_PTR_W-1:0] ROB_tag; // tag used to mark ROB complete
     
         // Optional redirect info (branch/jump)
         logic              branch_taken; // for BR unit
